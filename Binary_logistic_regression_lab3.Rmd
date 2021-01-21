@@ -7,24 +7,126 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(GGally) # for pairs plots
+library(broom) # to get tidy model outputs in dataframes
+library(jtools) # quick graphs of model outputs
 ```
 
-## R Markdown
+## Data exploration 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r, message=FALSE}
+# make a pairs plot with GGally
+penguins %>% 
+  select(species, bill_length_mm:sex) %>% 
+  ggpairs(aes(color = species))
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+```{r}
+# two species that overlap (harder to classify, gentoos are larger)
+# note class of species is a factor (gentoo will stick around as a factor because of this)
+levels(penguins$species)
 
-You can also embed plots, for example:
+# Create subset
+adelie_chinstrap <- penguins %>% 
+  filter(species %in% c("Adelie", "Chinstrap")) %>%  # keep species in any part of that vector
+  mutate(species = fct_drop(species)) # want to make it clear that there are only 2 levels (no Gentoo)--fct_drop drops factors where there are no observations. Now Adelie is first (0) and Chinstrap is second (1)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Dataviz of the two species:
+
+```{r}
+ggplot(data = adelie_chinstrap, aes(x = body_mass_g, y = flipper_length_mm)) +
+  geom_point(aes(color = sex)) +
+  facet_wrap(~species)
+```
+See that there is some sexual dimorphism (males appear larger). If these were your data you would do more exploration here
+
+## Binary logistic regression
+
+- body mass
+- flipper length
+- penguin sex
+
+```{r}
+# make the binomial logistic regression (still a generalized linear model, just with a different link)
+adelie_chinstrap_blr <- glm(species ~ body_mass_g + flipper_length_mm + sex,
+                            data = adelie_chinstrap,
+                            family = "binomial")
+```
+
+Take a look at the outcomes
+
+```{r}
+adelie_chinstrap_blr
+
+summary(adelie_chinstrap_blr) # null hypothesis is that the coefficient = 0
+# remember lefthand side is probability of chinstrap (non-zero level, "level 1")--so as bodymass increases, odds of a penguin being a chinstrap may be going down (although non-significant). When flipper length increases, odds that it's a chinstrap is going up. If a penguin is male, it is less likely to be a chinstrap penguin (that's a little weird maybe don't take that to heart)
+```
+
+Does it make sense that increasing flipper length results in increasing probability of being chinstrap?
+
+```{r}
+ggplot(data = adelie_chinstrap, aes(x = species, y = flipper_length_mm)) + 
+  geom_jitter(aes(color = sex)) # maybe chinstraps are a little larger--makes sense
+```
+
+Interpreting coefficients (as probabilities) using broom augment function
+
+```{r}
+# augment takes original data and then adds on column of probability based on model of an observation being chinstrap
+blr_fitted <- adelie_chinstrap_blr %>% 
+  broom::augment(type.predict = "response") # need to specify probabilities [response], not log odds
+# fitted value is probability that the observation is a chinstrap
+# doesn't always predict correctly 
+# would want to make a matrix of false positives, true positives, etc. and see how well it did
+
+```
+
+Plot fitted probabilities:
+
+```{r}
+ggplot(data = blr_fitted, aes(x = flipper_length_mm, y = .fitted)) +
+  geom_point(aes(color = sex, pch = species)) + 
+  geom_smooth(aes(color = sex), se = FALSE) +
+  labs(x = "Flipper length (mm)",
+       y = "Probability of outcome Chinstrap")
+# flipper length seems most significant
+# could also add a layer with actual data points (zeros for Adelies and their flipper lengths, then 1's for Chinstraps and their flipper lengths) 
+```
+
+Effect plot from jtools package for quick overviews of what model looks like based on different variables
+
+```{r}
+effect_plot(adelie_chinstrap_blr,
+            pred = flipper_length_mm,
+            y.label = "Probability of Chinstrap",
+            interval = TRUE) # this is actually the model fit
+
+# body mass vs. being a chinstrap
+effect_plot(adelie_chinstrap_blr,
+            pred = body_mass_g,
+            y.label = "Probability of Chinstrap",
+            interval = TRUE) # this is actually the model fit
+# this is less customizable, though, so better to be in ggplot if not just looking for a quick overview
+
+```
+
+Use predict function to ask about data not existing in one's dataset. For instance, what's the probability that a female penguin weighing 3410 pounds with a flipper length of 192 is  a chinstrap?
+
+```{r}
+ex_1 <- predict(adelie_chinstrap_blr,
+                data.frame(sex = "female",
+                           body_mass_g = 3410,
+                           flipper_length_mm = 192),
+                type = "response") # response is probability! Otherwise it's lod-odds
+
+ex_1 # probability it's a chinstrap
+
+```

@@ -9,3 +9,4 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+First create a new CSS file for formatting--goo to file -> new file, CSS File

@@ -12,4 +12,14 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-First create a new CSS file for formatting--goo to file -> new file, CSS File. Then in the YAML tell it about the CSS in the output (needs to be in the same folder)
+First create a new CSS file for formatting--go to file -> new file, CSS File. Then in the YAML tell it about the CSS in the output (needs to be in the same folder), which it'll use when it renders
+
+## This is my font testing header
+
+### This is level 3
+
+#### This is level 4
+
+If you don't know what an element is called to google it: CTRL: right clikc + Inspect element -> see info for development (e.g. h3 for Header 3 and if you want to overwrite it you'll know what it's called)
+
+## Learn more here: https://www.w3schools.com/css/

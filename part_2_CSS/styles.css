@@ -1,0 +1,24 @@
+/* Import Google fonts (note commenting is different in CSS files)--go to https://fonts.google.com/ to pick fonts, pick an option, pick "select this style", click @ import, copy code from @ import to semi-colon (don't need the <style>), then paste below*/
+
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Potta+One&display=swap');
+
+/*Specify how you want these used (i.e. update headers, (e.g. h2)) */
+
+h2 {
+  font-family: "Abril Fatface";
+  font-size: 40px;
+  color: purple;
+}
+
+h3 {
+  font-family: "Potta One";
+  font-size: 25px;
+  color: magenta;
+}
+
+body {
+  font-family: "Abril Fatface";
+  font-size: 19px;
+  color: teal;
+  background-color: yellow;
+}

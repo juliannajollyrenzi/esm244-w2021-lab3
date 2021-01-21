@@ -2,11 +2,14 @@
 title: 'CSS: Part 2'
 author: "Julianna Renzi"
 date: "1/20/2021"
-output: html_document
----
+output: 
+  html_document:
+    css: "styles.css"
 
+---
+# above is the YAML: Yet another markup language
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-First create a new CSS file for formatting--goo to file -> new file, CSS File
+First create a new CSS file for formatting--goo to file -> new file, CSS File. Then in the YAML tell it about the CSS in the output (needs to be in the same folder)
